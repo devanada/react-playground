@@ -1,0 +1,173 @@
+import { FieldValues, UseFormRegister } from "react-hook-form";
+import { InputHTMLAttributes } from "react";
+import clsx from "clsx";
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  name: string;
+  label: string;
+  register?: UseFormRegister<FieldValues>;
+  error?: string;
+}
+
+interface TextAreaProps extends InputHTMLAttributes<HTMLTextAreaElement> {
+  name: string;
+  label: string;
+  register?: UseFormRegister<FieldValues>;
+  error?: string;
+}
+
+interface SelectProps extends InputHTMLAttributes<HTMLSelectElement> {
+  name: string;
+  label: string;
+  options: string[];
+  register?: UseFormRegister<FieldValues>;
+  error?: string;
+}
+
+interface RadioProps extends InputHTMLAttributes<HTMLInputElement> {
+  name: string;
+  label: string;
+  options: {
+    id: string;
+    label: string;
+  }[];
+  register?: UseFormRegister<FieldValues>;
+  error?: string;
+}
+
+function Input(props: InputProps) {
+  const { label, id, error, register, name } = props;
+
+  return (
+    <div className="flex flex-col mb-4">
+      <label
+        className="text-black dark:text-white tracking-wider mb-3"
+        htmlFor={id}
+      >
+        {label}
+      </label>
+      <input
+        className={clsx(
+          "border rounded-lg bg-slate-200 dark:bg-neutral-600 border-red-500 text-black dark:text-white p-2 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 w-full",
+          !error && "border-slate-200"
+        )}
+        {...(register ? register(name) : {})}
+        {...props}
+      />
+      {error && (
+        <label className="label">
+          <span className="break-words text-sm font-light text-red-500">
+            {error}
+          </span>
+        </label>
+      )}
+    </div>
+  );
+}
+
+function TextArea(props: TextAreaProps) {
+  const { label, id, error, register, name } = props;
+
+  return (
+    <div className="flex flex-col mb-4">
+      <label
+        className="text-black dark:text-white tracking-wider mb-3"
+        htmlFor={id}
+      >
+        {label}
+      </label>
+      <textarea
+        className={clsx(
+          "border rounded-lg bg-slate-200 dark:bg-neutral-600 border-red-500 text-black dark:text-white p-2 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 w-full",
+          !error && "border-slate-200"
+        )}
+        {...(register ? register(name) : {})}
+        {...props}
+      />
+      {error && (
+        <label className="label">
+          <span className="break-words text-sm font-light text-red-500">
+            {error}
+          </span>
+        </label>
+      )}
+    </div>
+  );
+}
+
+function Select(props: SelectProps) {
+  const { label, placeholder, id, error, options, register, name } = props;
+
+  return (
+    <div className="flex flex-col mb-4">
+      <label
+        className="text-black dark:text-white tracking-wider mb-3"
+        htmlFor={id}
+      >
+        {label}
+      </label>
+      <select
+        className={clsx(
+          "border rounded-lg bg-slate-200 dark:bg-neutral-600 border-red-500 text-black dark:text-white p-2 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 w-full",
+          !error && "border-slate-200"
+        )}
+        defaultValue=""
+        {...(register ? register(name) : {})}
+        {...props}
+      >
+        <option disabled value="">
+          {placeholder}
+        </option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <label className="label">
+          <span className="break-words text-sm font-light text-red-500">
+            {error}
+          </span>
+        </label>
+      )}
+    </div>
+  );
+}
+
+function RadioGroup(props: RadioProps) {
+  const { label, error, options, register, name } = props;
+
+  return (
+    <div className="flex flex-col mb-4">
+      <label className="text-black dark:text-white tracking-wider mb-3">
+        {label}
+      </label>
+      {options.map((option) => (
+        <div key={option.id} className="flex gap-3">
+          <input
+            type="radio"
+            value={option.label}
+            id={option.id}
+            {...(register ? register(name) : {})}
+          />
+          <label
+            className="text-black dark:text-white tracking-wider"
+            htmlFor={option.id}
+          >
+            {option.label}
+          </label>
+        </div>
+      ))}
+      {error && (
+        <label className="label">
+          <span className="break-words text-sm font-light text-red-500">
+            {error}
+          </span>
+        </label>
+      )}
+    </div>
+  );
+}
+
+export { Input, TextArea, Select, RadioGroup };
