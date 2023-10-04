@@ -7,10 +7,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 export default function Button(props: Props) {
   const { label } = props;
   return (
-    <button
-      className="p-3 bg-neutral-500 rounded-xl px-6 text-white font-bold"
-      {...props}
-    >
+    <button className="btn btn-neutral btn-wide" {...props}>
       {label}
     </button>
   );

@@ -1,101 +1,187 @@
+import { IoPencil, IoTrash, IoEye } from "react-icons/io5";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useEffect, useMemo } from "react";
+import { ColumnDef } from "@tanstack/react-table";
 import { useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
-import { useState } from "react";
-import * as z from "zod";
+import { toast } from "react-toastify";
 
 import { Input, RadioGroup, Select, TextArea } from "@/components/input";
 import Layout from "@/components/layout";
 import Button from "@/components/button";
 import Table from "@/components/table";
-
-const MAX_FILE_SIZE = 500000;
-const ACCEPTED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-];
-
-const schema = z.object({
-  id: z.string().optional(),
-  productName: z
-    .string()
-    .min(1, { message: "Please enter a valid product name" })
-    .max(25, { message: "Product name must not exceed 25 characters" }),
-  productCategory: z
-    .string()
-    .min(1, { message: "Please enter a valid product category" }),
-  image: z
-    .any()
-    .refine(
-      (files) => files?.[0]?.size <= MAX_FILE_SIZE,
-      `Max image size is 5MB.`
-    )
-    .refine(
-      (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      "Only .jpg, .jpeg, .png and .webp formats are supported."
-    ),
-  productFreshness: z
-    .string()
-    .min(1, { message: "Please enter a valid product freshness" }),
-  additionalDescription: z
-    .string()
-    .min(1, { message: "Please enter a valid additional description" }),
-  productPrice: z
-    .string()
-    .min(1, { message: "Please enter a valid product price" }),
-});
+import {
+  getProducts,
+  createProducts,
+  updateProduct,
+  deleteProduct,
+} from "@/utils/apis/products/api";
+import { ProductType, productSchema } from "@/utils/apis/products/types";
+import { useNavigate } from "react-router-dom";
 
 export default function Index() {
-  const [selectedId, setSelectedId] = useState("");
   const [products, setProducts] = useState<ProductType[]>([]);
-  const [radioOption] = useState([
-    {
-      id: "freshness-new",
-      label: "Brand New",
-    },
-    {
-      id: "freshness-second",
-      label: "Second Hand",
-    },
-    {
-      id: "freshness-refurbished",
-      label: "Refurbished",
-    },
-  ]);
+  const [selectedId, setSelectedId] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const {
     reset,
     setValue,
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(schema),
+    formState: { errors, isSubmitting },
+  } = useForm<ProductType>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      productFreshness: "",
+      productPrice: 0,
+    },
   });
 
-  function onSubmit(data: any) {
-    const newData = { id: uuidv4(), ...data };
-    const dupeArr = [...products, newData];
-    setProducts(dupeArr);
-    reset();
+  const columns = useMemo<ColumnDef<ProductType>[]>(
+    () => [
+      {
+        header: "No",
+        accessorKey: "id",
+        cell: (info) => info.getValue(),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "Product Name",
+        accessorKey: "productName",
+        cell: (info) => info.getValue(),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "Product Category",
+        accessorKey: "productCategory",
+        cell: (info) => info.getValue(),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "Image of Product",
+        accessorKey: "image",
+        cell: (info) => (
+          <div className="flex items-center space-x-3">
+            <div className="avatar">
+              <div className="mask mask-squircle w-12 h-12">
+                <img
+                  src={info.row.original.image}
+                  alt={info.row.original.productName}
+                />
+              </div>
+            </div>
+            <p>{info.row.original.image}</p>
+          </div>
+        ),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "Product Freshness",
+        accessorKey: "productFreshness",
+        cell: (info) => info.getValue(),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "Additional Description",
+        accessorKey: "additionalDescription",
+        cell: (info) => info.getValue(),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "Product Price",
+        accessorKey: "productPrice",
+        cell: (info) => info.getValue(),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "",
+        accessorKey: "actionDetail",
+        cell: (info) => (
+          <IoEye
+            aria-label="action-detail"
+            onClick={() => navigate(`/products/${info.row.original.id}`)}
+          />
+        ),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "",
+        accessorKey: "actionEdit",
+        cell: (info) => (
+          <IoPencil
+            aria-label="action-edit"
+            onClick={() => onClickEdit(info.row.original)}
+          />
+        ),
+        footer: (props) => props.column.id,
+      },
+      {
+        header: "",
+        accessorKey: "actionDelete",
+        cell: (info) => (
+          <IoTrash
+            aria-label="action-delete"
+            onClick={() => onClickDelete(info.row.original.id!)}
+          />
+        ),
+        footer: (props) => props.column.id,
+      },
+    ],
+    []
+  );
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  async function fetchData() {
+    try {
+      setIsLoading(true);
+      const result = await getProducts();
+      setProducts(result);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  function onSubmitEdit(data: any) {
-    const newData = products.map((product) => {
-      if (product.id === selectedId) {
-        return { id: selectedId, ...data };
-      }
-      return product;
-    });
-    setProducts(newData);
-    setSelectedId("");
-    reset();
+  async function onSubmit(data: ProductType) {
+    try {
+      await createProducts(data);
+      toast.success("Success added new data");
+      reset();
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  }
+
+  async function onSubmitEdit(data: ProductType) {
+    try {
+      await updateProduct({ ...data, id: selectedId });
+      toast.success("Success added new data");
+      setSelectedId(0);
+      reset();
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  }
+
+  async function onClickDelete(productId: number) {
+    try {
+      await deleteProduct(productId);
+      toast.success(`Successfully deleted product`);
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
   }
 
   function onClickEdit(data: ProductType) {
-    setSelectedId(data.id);
+    setSelectedId(data.id!);
     setValue("productName", data.productName);
     setValue("productCategory", data.productCategory);
     setValue("image", data.image);
@@ -104,35 +190,29 @@ export default function Index() {
     setValue("productPrice", data.productPrice);
   }
 
-  function onClickDelete(data: ProductType) {
-    const newData = products.filter((product) => product.id !== data.id);
-    setProducts(newData);
-  }
-
   return (
     <Layout>
       <form
-        onSubmit={handleSubmit(selectedId == "" ? onSubmit : onSubmitEdit)}
+        onSubmit={handleSubmit(selectedId == 0 ? onSubmit : onSubmitEdit)}
         aria-label="product-form"
       >
         <Input
           id="input-product-name"
           aria-label="input-product-name"
-          alt="input-product-name"
           label="Product Name"
           name="productName"
           register={register}
-          error={errors.productName?.message as string}
+          error={errors.productName?.message}
         />
         <Select
           id="input-product-category"
           aria-label="input-product-category"
           label="Product Category"
           name="productCategory"
-          options={["Food", "Beverage"]}
+          options={["Electronics", "Furniture", "Appliance"]}
           placeholder="Choose..."
           register={register}
-          error={errors.productCategory?.message as string}
+          error={errors.productCategory?.message}
         />
         <Input
           id="input-product-image"
@@ -148,9 +228,9 @@ export default function Index() {
           aria-label="input-product-freshness"
           label="Product Freshness"
           name="productFreshness"
-          options={radioOption}
+          options={["Brand New", "Second Hand", "Refurbished"]}
           register={register}
-          error={errors.productFreshness?.message as string}
+          error={errors.productFreshness?.message}
         />
         <TextArea
           id="input-product-description"
@@ -159,7 +239,7 @@ export default function Index() {
           role="input"
           name="additionalDescription"
           register={register}
-          error={errors.additionalDescription?.message as string}
+          error={errors.additionalDescription?.message}
         />
         <Input
           id="input-product-price"
@@ -168,29 +248,21 @@ export default function Index() {
           name="productPrice"
           type="number"
           register={register}
-          error={errors.productPrice?.message as string}
+          error={errors.productPrice?.message}
         />
         <Button
           id="btn-submit"
           aria-label="btn-submit"
           label="Submit"
           type="submit"
+          disabled={isSubmitting}
         />
       </form>
       <Table
         datas={products}
-        isReady={true}
-        headers={[
-          "No",
-          "Product Name",
-          "Product Category",
-          "Image of Product",
-          "Product Freshness",
-          "Additional Description",
-          "Product Price",
-        ]}
-        onEditClick={(data) => onClickEdit(data)}
-        onDeleteClick={(data) => onClickDelete(data)}
+        columns={columns}
+        aria-label="product-table"
+        isLoading={isLoading}
       />
     </Layout>
   );

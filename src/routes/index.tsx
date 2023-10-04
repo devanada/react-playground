@@ -1,12 +1,18 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import Home from "@/pages";
-import PostsPage from "@/pages/posts";
-import PostsDetail from "@/pages/posts/detail";
+import AuthLogin from "@/pages/auth/login";
+import AuthRegister from "@/pages/auth/register";
 import ProductsPage from "@/pages/products";
 import ProductsDetail from "@/pages/products/detail";
+import { useEffect } from "react";
+import { setAxiosConfig } from "@/utils/apis/axiosWithConfig";
 
 export default function Router() {
+  useEffect(() => {
+    setAxiosConfig("", "https://651516e3dc3282a6a3cdd60a.mockapi.io/api/v1");
+  }, []);
+
   const router = createBrowserRouter([
     {
       path: "/",
@@ -21,12 +27,12 @@ export default function Router() {
       element: <ProductsDetail />,
     },
     {
-      path: "/posts",
-      element: <PostsPage />,
+      path: "/login",
+      element: <AuthLogin />,
     },
     {
-      path: "/posts/:id_post",
-      element: <PostsDetail />,
+      path: "/register",
+      element: <AuthRegister />,
     },
     {
       path: "*",

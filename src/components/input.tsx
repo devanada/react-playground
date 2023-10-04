@@ -1,42 +1,21 @@
-import { FieldValues, UseFormRegister } from "react-hook-form";
 import { InputHTMLAttributes } from "react";
 import clsx from "clsx";
+import { UseFormRegister } from "react-hook-form";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+type InputProps<T, U = undefined> = {
   name: string;
   label: string;
-  register?: UseFormRegister<FieldValues>;
+  register?: UseFormRegister<any>;
   error?: string;
-}
+} & T &
+  (U extends undefined ? {} : U);
 
-interface TextAreaProps extends InputHTMLAttributes<HTMLTextAreaElement> {
-  name: string;
-  label: string;
-  register?: UseFormRegister<FieldValues>;
-  error?: string;
-}
-
-interface SelectProps extends InputHTMLAttributes<HTMLSelectElement> {
-  name: string;
-  label: string;
+interface OptionProps {
   options: string[];
-  register?: UseFormRegister<FieldValues>;
-  error?: string;
 }
 
-interface RadioProps extends InputHTMLAttributes<HTMLInputElement> {
-  name: string;
-  label: string;
-  options: {
-    id: string;
-    label: string;
-  }[];
-  register?: UseFormRegister<FieldValues>;
-  error?: string;
-}
-
-function Input(props: InputProps) {
-  const { label, id, error, register, name } = props;
+function Input(props: InputProps<InputHTMLAttributes<HTMLInputElement>>) {
+  const { label, id, error, register, name, type } = props;
 
   return (
     <div className="flex flex-col mb-4">
@@ -51,7 +30,12 @@ function Input(props: InputProps) {
           "border rounded-lg bg-slate-200 dark:bg-neutral-600 border-red-500 text-black dark:text-white p-2 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 w-full",
           !error && "border-slate-200"
         )}
-        {...(register ? register(name) : {})}
+        type={type}
+        {...(register
+          ? register(name, {
+              valueAsNumber: type === "number" ? true : false,
+            })
+          : {})}
         {...props}
       />
       {error && (
@@ -65,7 +49,7 @@ function Input(props: InputProps) {
   );
 }
 
-function TextArea(props: TextAreaProps) {
+function TextArea(props: InputProps<InputHTMLAttributes<HTMLTextAreaElement>>) {
   const { label, id, error, register, name } = props;
 
   return (
@@ -95,7 +79,9 @@ function TextArea(props: TextAreaProps) {
   );
 }
 
-function Select(props: SelectProps) {
+function Select(
+  props: InputProps<InputHTMLAttributes<HTMLSelectElement>, OptionProps>
+) {
   const { label, placeholder, id, error, options, register, name } = props;
 
   return (
@@ -135,29 +121,30 @@ function Select(props: SelectProps) {
   );
 }
 
-function RadioGroup(props: RadioProps) {
+function RadioGroup(
+  props: InputProps<InputHTMLAttributes<HTMLInputElement>, OptionProps>
+) {
   const { label, error, options, register, name } = props;
 
   return (
-    <div className="flex flex-col mb-4">
+    <div className="flex flex-col mb-4" aria-label={props["aria-label"]}>
       <label className="text-black dark:text-white tracking-wider mb-3">
         {label}
       </label>
       {options.map((option) => (
-        <div key={option.id} className="flex gap-3">
+        <label
+          className="text-black dark:text-white tracking-wider"
+          htmlFor={option}
+          key={option}
+        >
           <input
             type="radio"
-            value={option.label}
-            id={option.id}
+            value={option}
+            id={option}
             {...(register ? register(name) : {})}
           />
-          <label
-            className="text-black dark:text-white tracking-wider"
-            htmlFor={option.id}
-          >
-            {option.label}
-          </label>
-        </div>
+          {option}
+        </label>
       ))}
       {error && (
         <label className="label">
