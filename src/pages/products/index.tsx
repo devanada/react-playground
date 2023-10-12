@@ -161,7 +161,7 @@ export default function Index() {
   async function onSubmitEdit(data: ProductType) {
     try {
       await updateProduct({ ...data, id: selectedId });
-      toast.success("Success added new data");
+      toast.success("Success edited data");
       setSelectedId(0);
       reset();
       fetchData();
@@ -197,7 +197,6 @@ export default function Index() {
         aria-label="product-form"
       >
         <Input
-          id="input-product-name"
           aria-label="input-product-name"
           label="Product Name"
           name="productName"
@@ -205,7 +204,6 @@ export default function Index() {
           error={errors.productName?.message}
         />
         <Select
-          id="input-product-category"
           aria-label="input-product-category"
           label="Product Category"
           name="productCategory"
@@ -215,7 +213,6 @@ export default function Index() {
           error={errors.productCategory?.message}
         />
         <Input
-          id="input-product-image"
           aria-label="input-product-image"
           label="Image of Product"
           name="image"
@@ -224,7 +221,6 @@ export default function Index() {
           error={errors.image?.message as string}
         />
         <RadioGroup
-          id="input-product-freshness"
           aria-label="input-product-freshness"
           label="Product Freshness"
           name="productFreshness"
@@ -233,7 +229,6 @@ export default function Index() {
           error={errors.productFreshness?.message}
         />
         <TextArea
-          id="input-product-description"
           aria-label="input-product-description"
           label="Additional Description"
           role="input"
@@ -242,7 +237,6 @@ export default function Index() {
           error={errors.additionalDescription?.message}
         />
         <Input
-          id="input-product-price"
           aria-label="input-product-price"
           label="Product Price"
           name="productPrice"
@@ -251,11 +245,11 @@ export default function Index() {
           error={errors.productPrice?.message}
         />
         <Button
-          id="btn-submit"
           aria-label="btn-submit"
           label="Submit"
           type="submit"
           disabled={isSubmitting}
+          aria-disabled={isSubmitting}
         />
       </form>
       <Table

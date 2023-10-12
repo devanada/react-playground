@@ -138,6 +138,7 @@ function RadioGroup(
           key={option}
         >
           <input
+            className="mr-4"
             type="radio"
             value={option}
             id={option}

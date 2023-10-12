@@ -162,8 +162,85 @@ describe("Index Product Page", () => {
     });
 
     describe("Edit Product", () => {
-      it.skip("should edit product", () => {
-        // TODO: should edit product
+      beforeEach(async () => {
+        const table = screen.getByLabelText("product-table");
+        const tableRow = within(table).getAllByLabelText("row")[0];
+
+        await act(async () => {
+          fireEvent.click(within(tableRow).getByLabelText("action-edit"));
+        });
+      });
+
+      it("should display the selected product on input when click edit icon", async () => {
+        const form = screen.getByLabelText("product-form");
+        const inputList = {
+          productName: "input-product-name",
+          productCategory: "input-product-category",
+          "Brand New": "Brand New",
+          additionalDescription: "input-product-description",
+          productPrice: "input-product-price",
+        };
+
+        let key: keyof typeof inputList;
+        for (key in inputList) {
+          const inputForm = within(form).getByLabelText(inputList[key]);
+          const value = productsSampleData[0];
+          if (key === "Brand New") {
+            expect(inputForm).toBeChecked();
+          } else {
+            expect(inputForm).toHaveValue(value[key]);
+          }
+        }
+      });
+
+      it("should display error message below input file when click submit", async () => {
+        const form = screen.getByLabelText("product-form");
+
+        await act(async () => {
+          fireEvent.click(screen.getByLabelText("btn-submit"));
+        });
+
+        expect(within(form).getByText("Max image size is 5MB.")).toBeTruthy();
+      });
+
+      it("should edit the product and display the successful toast", async () => {
+        const form = screen.getByLabelText("product-form");
+        const input = within(form).getByLabelText("input-product-image");
+
+        fireEvent.change(input, {
+          target: { files: [file] },
+        });
+
+        mockedAxios.put.mockResolvedValueOnce({
+          data: productsSampleData[0],
+        });
+
+        await act(async () => {
+          fireEvent.click(screen.getByLabelText("btn-submit"));
+        });
+
+        mockedAxios.get.mockResolvedValueOnce({ data: productsSampleData });
+        expect(screen.getByText("Success edited data")).toBeTruthy();
+      });
+
+      it("should fail to edit the product and display the failed toast", async () => {
+        const form = screen.getByLabelText("product-form");
+        const input = within(form).getByLabelText("input-product-image");
+
+        fireEvent.change(input, {
+          target: { files: [file] },
+        });
+
+        mockedAxios.post.mockRejectedValueOnce({
+          data: {},
+        });
+
+        await act(async () => {
+          fireEvent.click(screen.getByLabelText("btn-submit"));
+        });
+
+        mockedAxios.get.mockResolvedValueOnce({ data: productsSampleData });
+        expect(screen.getByText("Failed to update a product")).toBeTruthy();
       });
     });
 
@@ -201,6 +278,20 @@ describe("Index Product Page", () => {
         setTimeout(() => {
           expect(screen.getByText("Failed to delete a product")).toBeTruthy();
         }, 1000);
+      });
+    });
+
+    describe("Detail Product", () => {
+      it("should navigate to selected product when click on eye icon", async () => {
+        const table = screen.getByLabelText("product-table");
+        const tableRow = within(table).getAllByLabelText("row")[0];
+        const buttonIcon = within(tableRow).getByLabelText("action-detail");
+
+        expect(buttonIcon).toBeInTheDocument();
+
+        await act(async () => {
+          fireEvent.click(buttonIcon);
+        });
       });
     });
   });
