@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import Layout from "@/components/layout";
-import { getDetailProduct } from "@/utils/apis/products/api";
-import { ProductType } from "@/utils/apis/products/types";
+import { getDetailProduct, ProductType } from "@/utils/apis/products";
 
 export default function Detail() {
   const [product, setProduct] = useState<Partial<ProductType>>({});

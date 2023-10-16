@@ -14,8 +14,9 @@ import {
   createProducts,
   updateProduct,
   deleteProduct,
-} from "@/utils/apis/products/api";
-import { ProductType, productSchema } from "@/utils/apis/products/types";
+  ProductType,
+  productSchema,
+} from "@/utils/apis/products";
 import { useNavigate } from "react-router-dom";
 
 export default function Index() {
